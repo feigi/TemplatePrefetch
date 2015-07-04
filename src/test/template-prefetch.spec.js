@@ -44,6 +44,10 @@ describe('Template Prefetch Module', function () {
             expect(testee.from().to().to).toBeDefined();
         });
 
+        it('to function returns object with to function thus enabling chaining', function () {
+            expect(testee.from().from).toBeUndefined();
+        });
+
         it('one from multiple to', function () {
             testee.from('from')
                 .to('to1')
@@ -77,10 +81,16 @@ describe('Template Prefetch Module', function () {
 
         var rootScopeMock, stateMock, templateCacheMock, httpMock, TemplatePrefetchProvider;
 
+        var onStateChangeSuccessCallback = null;
+
         var initMocks = function () {
 
             rootScopeMock = {
-                $on: jasmine.createSpy('rootScope.on')
+                $on: jasmine.createSpy('rootScope.on').and.callFake(function (event, callback) {
+                    if (event === '$stateChangeSuccess') {
+                        onStateChangeSuccessCallback = callback;
+                    }
+                })
             };
 
             stateMock = {
@@ -149,20 +159,26 @@ describe('Template Prefetch Module', function () {
             expect(rootScopeMock.$on).toHaveBeenCalledWith('$stateChangeSuccess', jasmine.any(Function));
         }));
 
-        it('On Initialize: Service prefetches and saves the templates for all states following the current one ' +
-            'for state with templateUrl and includes', function () {
-            currentStateMock.name = "fromState";
-            statesMap['toState1'] = {templateUrl: 'test-template.html'};
-            statesMap['toState2'] = {
+        var setupRoutes = function () {
+
+            statesMap['state2'] = {templateUrl: 'test-template.html'};
+            statesMap['state3'] = {
                 views: {
                     'view1': {templateUrl: 'test-template2.html'},
                     'view2': {templateUrl: 'test-template3.html'}
                 }
             };
-            // Confiugre routes
-            TemplatePrefetchProvider.from('fromState').to('toState1').to('toState2');
+            statesMap['state4'] = {templateUrl: 'test-template4.html'};
 
+            // Configure routes
+            TemplatePrefetchProvider.from('state1').to('state2').to('state3');
+            TemplatePrefetchProvider.from('state2').to('state4');
+        };
 
+        it('On Initialize: Service prefetches and saves the templates for all states following the current one ' +
+            'for state with templateUrl and includes', function () {
+            setupRoutes();
+            currentStateMock.name = "state1";
             // Trigger init of TemplatePrefetch
             inject(function (TemplatePrefetch) {
             });
@@ -177,6 +193,20 @@ describe('Template Prefetch Module', function () {
             expect(templateCacheMock.put).toHaveBeenCalledWith('test-template3.html', MOCK_HTML);
             expect(templateCacheMock.put).toHaveBeenCalledWith('test-include1.html', MOCK_HTML);
             expect(templateCacheMock.put).toHaveBeenCalledWith('test-include2.html', MOCK_HTML);
+        });
+
+        it('On state change: Service prefetches and saves the templates for all states following the current one', function () {
+            var MOCK_EVENT = {};
+            setupRoutes();
+            currentStateMock.name = "state1";
+            // Trigger init of TemplatePrefetch
+            inject(function (TemplatePrefetch) {
+            });
+
+            onStateChangeSuccessCallback(MOCK_EVENT, {name: 'state2'});
+
+            expect(httpMock.get).toHaveBeenCalledWith('test-template4.html');
+            expect(templateCacheMock.put).toHaveBeenCalledWith('test-template4.html', MOCK_HTML)
         });
     });
 });
