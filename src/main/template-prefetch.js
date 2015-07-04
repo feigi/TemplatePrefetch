@@ -95,6 +95,6 @@
 
             this.getRoutesFor = function (fromState) {
                 return routeMap[fromState].to;
-            }
+            };
         }]);
 }(angular));
