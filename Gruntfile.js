@@ -73,13 +73,6 @@ module.exports = function (grunt) {
             }
 
         },
-        // Automatically inject Bower components into the app
-        bowerInstall: {
-            app: {
-                src: ['<%= bowerApp.app %>/index.html'],
-                ignorePath: '<%= bowerApp.app %>/'
-            }
-        },
         // Upload bower component
         shell: {
             bowerRegister: {
