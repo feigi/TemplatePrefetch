@@ -4,3 +4,4 @@ bower_components/
 .idea/
 *.iml
 src/test/test_output
+*.log
