@@ -66,7 +66,7 @@ describe('Template Prefetch Module', function () {
 
     });
 
-    fdescribe('Template Prefetching', function () {
+    describe('Template Prefetching', function () {
 
         var currentStateMock = {};
         var statesMap = {};

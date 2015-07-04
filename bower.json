@@ -1,9 +1,9 @@
 {
   "name": "template-prefetch",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "title": "Template Prefetch",
   "appPath": "src",
-  "description": "A provider based on ui.router which prefetches all templates required by potentially following steps.",
+  "description": "A provider based on ui.router which prefetches all templates required by potentially following states.",
   "keywords": [
     "template",
     "prefetch",
