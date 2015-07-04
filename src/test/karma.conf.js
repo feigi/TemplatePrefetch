@@ -29,19 +29,19 @@ module.exports = function (config) {
 
         // preprocess matching files before serving them to the browser
         // available preprocessors: https://npmjs.org/browse/keyword/karma-preprocessor
-        preprocessors: {},
-
+        preprocessors: {
+            'src/main/**/*.js': 'coverage'
+        },
 
         // test results reporter to use
         // possible values: 'dots', 'progress'
         // available reporters: https://npmjs.org/browse/keyword/karma-reporter
-        reporters: ['progress', 'junit'],
+        reporters: ['progress', 'coverage', 'codeclimate-test-reporter'],
 
-        junitReporter: {
-            outputFile: 'src/test/test_output/test-results.xml',
-            suite: ''
+        coverageReporter: {
+            type : 'lcov',
+            dir : 'src/test/test_output/'
         },
-
 
         // web server port
         port: 9876,
@@ -72,7 +72,7 @@ module.exports = function (config) {
         plugins: [
             'karma-phantomjs-launcher',
             'karma-jasmine',
-            'karma-junit-reporter'
+            'karma-coverage',
         ]
     })
 };
