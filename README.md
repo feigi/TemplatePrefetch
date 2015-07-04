@@ -1,5 +1,6 @@
 [![Build status][travis-image]][travis-url]
 [![Code climate][codeclimate-image]][codeclimate-url]
+[![Test coverage][testcoverage-image]][testcoverage-url]
 
 Template Prefetch
 ===========
@@ -11,3 +12,5 @@ A provider based on ui.router which prefetches all templates required by potenti
 [travis-url]: https://travis-ci.org/feigi/TemplatePrefetch
 [codeclimate-image]: https://codeclimate.com/github/feigi/TemplatePrefetch/badges/gpa.svg
 [codeclimate-url]: https://codeclimate.com/github/feigi/TemplatePrefetch
+[testcoverage-image]: https://codeclimate.com/github/feigi/TemplatePrefetch/badges/gpa.svg
+[testcoverage-url]: https://codeclimate.com/github/feigi/TemplatePrefetch
