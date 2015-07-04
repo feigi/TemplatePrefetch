@@ -27,15 +27,15 @@
     "ui-router": "~0.2"
   },
   "main": [
-    "src/main/template-prefetch.js"
+    "dist/template-prefetch.js"
   ],
   "ignore": [
-    "/*.*",
     "**/.*",
+    "/Gruntfile.js",
+    "/package.json",
     "node_modules",
     "bower_components",
-    "test",
-    "tests"
+    "src"
   ],
   "authors": [
     "Christian Ziegler <github@public.feigling.net>"

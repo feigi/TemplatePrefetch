@@ -39,6 +39,7 @@ module.exports = function (grunt) {
                 ]
             }
         },
+
         // The actual grunt server settings
         connect: {
             options: {
@@ -69,6 +70,27 @@ module.exports = function (grunt) {
             }
 
         },
+
+        clean: ['dist/'],
+
+
+        copy: {
+            files: {
+                expand: true,
+                cwd: 'src/main/',
+                src: ['**'],
+                dest: 'dist/'
+            }
+        },
+
+        uglify: {
+            main: {
+                files: {
+                    'dist/template-prefetch.min.js': ['src/main/template-prefetch.js']
+                }
+            }
+        },
+
         // Upload bower component
         shell: {
             bowerRegister: {
@@ -88,6 +110,9 @@ module.exports = function (grunt) {
 
     // Load tasks
     grunt.loadNpmTasks('grunt-contrib-connect');
+    grunt.loadNpmTasks('grunt-contrib-uglify');
+    grunt.loadNpmTasks('grunt-contrib-copy');
+    grunt.loadNpmTasks('grunt-contrib-clean');
     grunt.loadNpmTasks('grunt-bower-install');
     grunt.loadNpmTasks('grunt-express');
     grunt.loadNpmTasks('grunt-shell');
@@ -95,5 +120,6 @@ module.exports = function (grunt) {
 
     // Register new tasks
     grunt.registerTask('serve', ['bowerInstall', 'connect', 'watch']);
+    grunt.registerTask('build', ['clean', 'copy', 'uglify']);
     grunt.registerTask('publish', ['shell:bowerRegister']);
 };
