@@ -5,19 +5,21 @@
 Template Prefetch
 ===========
 
-A provider based on ui.router which prefetches all templates required by potentially following steps.
+A provider based on ui.router which prefetches all templates required by potentially following states.
 
 ## Motivation
 
 Using UI-Router you are encouraged to divide your application markup in small junks. This can result in quite a view 
- files making up a single page. Those files obviously have to be fetched form the server which can lead to flickering
+ files making up a single page. Those files obviously have to be fetched from the server which can lead to flickering
  during the rendering process. Of course you can help yourself by prefilling the template cache, but this usually means
- loading a single javascript file containing the markup for your whole application. On slower devices this causes
- long loading times for markup you may not even need.
+ loading a single javascript file containing the markup for your whole application. In other words have to load markup
+ you may not even need. This can cause rather long loading times which is definitely not what you want, especially on 
+ mobile devices. 
  Wouldn't it be cool to just load the markup you will need for the pages a user can view next? ui-router-template-prefetch
  lets you achieve this.
- You decide which states a user can activate at a given state A and template-prefetch will fetch all markup required for 
- those states once A is activated.
+ By defining which state B can follow a state A, ui-router-template-prefetch is able to load all markup that is needed
+ to render state B while the user is still in state A. If state B is activated the markup is already there and the
+ rendering will be smooth and quick.
 
 ## Install
 
@@ -27,9 +29,12 @@ bower install --save ui-router-template-prefetch
 
 ## Documentation
 
-In order to use template prefetching you have to define the routes your application state may go. This means you 
- define which state can following after which using simple from().to() calls on the TemplatePrefetchProvider. Those
- functions expect ui-router state names as you would use them in $state.go() calls.
+In order to use template prefetching you have to define valid routes for your application state. This means you provide
+ all the state transitions that are valid for your application. This is done by simple from('A').to('B') calls, where
+ A and B are valid ui.router state names.
+ So, essentially, ui-router-template-prefetch has a complete state model of your application. In graph theoretical terms, 
+ the states from ui.router are the nodes and the from().to() calls represent the directed edges between nodes.
+ The state transitions are defined as follows:
 
 ```js
 angular('myApp', ['template-prefetch'])
@@ -38,7 +43,7 @@ angular('myApp', ['template-prefetch'])
         TemplatePrefetchProvider.from('overview').to('details');
 });
 ```
-As you can see, a multiple to() calls can be chained on a from() call. For API clarity it is not possible to chain
+As you can see, multiple to() calls can be chained to a from() call. For API clarity it is not possible to chain
  a from() call to an to() call.
 
 This is all you have to to. From now on ui-router-template-prefetch will fetch all templates and ng-includes for
