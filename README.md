@@ -14,9 +14,11 @@ Using UI-Router you are encouraged to divide your application markup in small ju
  during the rendering process. Of course you can help yourself by prefilling the template cache, but this usually means
  loading a single javascript file containing the markup for your whole application. In other words have to load markup
  you may not even need. This can cause rather long loading times which is definitely not what you want, especially on 
- mobile devices. 
+ mobile devices.
+ 
  Wouldn't it be cool to just load the markup you will need for the pages a user can view next? ui-router-template-prefetch
  lets you achieve this.
+ 
  By defining which state B can follow a state A, ui-router-template-prefetch is able to load all markup that is needed
  to render state B while the user is still in state A. If state B is activated the markup is already there and the
  rendering will be smooth and quick.
@@ -32,6 +34,7 @@ bower install --save ui-router-template-prefetch
 In order to use template prefetching you have to define valid routes for your application state. This means you provide
  all the state transitions that are valid for your application. This is done by simple from('A').to('B') calls, where
  A and B are valid ui.router state names.
+ 
  So, essentially, ui-router-template-prefetch has a complete state model of your application. In graph theoretical terms, 
  the states from ui.router are the nodes and the from().to() calls represent the directed edges between nodes.
  The state transitions are defined as follows:

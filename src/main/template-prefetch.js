@@ -36,7 +36,7 @@
                 };
             };
 
-            this.$get = ['$rootScope', '$state', '$templateCache', '$http', function ($rootScope, $state, $templateCache, $http, $log) {
+            this.$get = ['$rootScope', '$state', '$templateCache', '$http', '$log', function ($rootScope, $state, $templateCache, $http, $log) {
 
                 $log.debug('TemplatePrefetch: Instantiated');
 
