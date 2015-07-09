@@ -36,9 +36,14 @@
                 };
             };
 
-            this.$get = ['$rootScope', '$state', '$templateCache', '$http', function ($rootScope, $state, $templateCache, $http) {
+            this.$get = ['$rootScope', '$state', '$templateCache', '$http', function ($rootScope, $state, $templateCache, $http, $log) {
+
+                $log.debug('TemplatePrefetch: Instantiated');
 
                 var prefetch = function (toState) {
+
+                    $log.debug('TemplatePrefetch: called with toState: ' + toState);
+
                     var node = routeMap[toState];
                     if (!node) {
                         return;
@@ -51,15 +56,18 @@
                         var url;
 
                         if (!toStateObj.templateUrl && toStateObj.views) {
+                            $log.debug('TemplatePrefetch: No templateUrl for ' + toStateName + ', checking views...');
                             for (var viewName in toStateObj.views) {
                                 var view = toStateObj.views[viewName];
                                 if (view.templateUrl) {
                                     url = view.templateUrl;
+                                    $log.debug('TemplatePrefetch: Fetching view template ' + url);
                                     $http.get(url).success(handleResponse(url));
                                 }
                             }
                         } else {
                             url = toStateObj.templateUrl;
+                            $log.debug('TemplatePrefetch: Fetching template ' + url);
                             $http.get(url).success(handleResponse(url));
                         }
                     }
