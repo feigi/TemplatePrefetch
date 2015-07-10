@@ -168,7 +168,7 @@ describe('Template Prefetch Module', function () {
                     'view2': {templateUrl: 'test-template3.html'}
                 }
             };
-            statesMap['state4'] = {templateUrl: 'test-template4.html'};
+            statesMap['state4'] = {templateUrl: function () {return 'test-template4.html'}};
 
             // Configure routes
             TemplatePrefetchProvider.from('state1').to('state2').to('state3');

@@ -36,7 +36,8 @@
                 };
             };
 
-            this.$get = ['$rootScope', '$state', '$templateCache', '$http', '$log', function ($rootScope, $state, $templateCache, $http, $log) {
+            this.$get = ['$rootScope', '$state', '$stateParams', '$templateCache', '$http', '$log',
+                function ($rootScope, $state, $stateParams, $templateCache, $http, $log) {
 
                 $log.debug('TemplatePrefetch: Instantiated');
 
@@ -60,13 +61,13 @@
                             for (var viewName in toStateObj.views) {
                                 var view = toStateObj.views[viewName];
                                 if (view.templateUrl) {
-                                    url = view.templateUrl;
+                                    url = getTemplateUrl(view);
                                     $log.debug('TemplatePrefetch: Fetching view template ' + url);
                                     $http.get(url).success(handleResponse(url));
                                 }
                             }
                         } else {
-                            url = toStateObj.templateUrl;
+                            url = getTemplateUrl(toStateObj);
                             $log.debug('TemplatePrefetch: Fetching template ' + url);
                             $http.get(url).success(handleResponse(url));
                         }
@@ -88,6 +89,14 @@
                         fetchIncludes(data);
                         $templateCache.put(url, data);
                     };
+                };
+
+                var getTemplateUrl = function (stateOrView) {
+                    var templateUrl = stateOrView.templateUrl;
+                    if (typeof templateUrl === 'function') {
+                        return templateUrl($stateParams);
+                    }
+                    return templateUrl;
                 };
 
                 prefetch($state.current.name);
