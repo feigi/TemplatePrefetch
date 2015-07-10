@@ -22,9 +22,9 @@
                 })
                 .state('flow', {
                     url: '/flow?i',
+                    params: {i: '1'},
                     templateUrl: function ($stateParams) {
-                        var stepNumber = $stateParams.i || 1;
-                        return 'views/flow-step' + stepNumber + '.html';
+                        return 'views/flow-step' + $stateParams.i + '.html';
                     }
                 })
                 .state('abstractList', {
@@ -45,7 +45,9 @@
                 });
 
             // Configure all valid transitions
-            TemplatePrefetchProvider.from('main').to('flow').to('list');
-
+            TemplatePrefetchProvider.from('main').to('flow', {i: '1'}).to('list');
+            TemplatePrefetchProvider.from('flow', {i: '1'}).to('flow', {i: '2'});
+            TemplatePrefetchProvider.from('flow', {i: '2'}).to('flow', {i: '3'});
+            TemplatePrefetchProvider.from('flow', {i: '3'}).to('main');
         })
 })(angular);
