@@ -2,64 +2,121 @@
 
     'use strict';
 
-    var Node = function (fromState, toState) {
-        this.from = fromState;
-        this.to = [];
-
-        if (toState) {
-            this.to.push(toState);
-        }
-    };
-
     angular.module('template-prefetch', ['ui.router'])
         .provider('TemplatePrefetch', [function () {
 
-            var routeMap = {};
+            /**
+             * An array of Edge objects representing the
+             * routes configured by the user.
+             */
+            var routes = [];
 
-            var from = function (fromState) {
-                var node = routeMap[fromState] || new Node(fromState);
+            var createNode = function (stateName, queryParams) {
+                var node = {name: stateName};
+                if (queryParams && !angular.equals({}, queryParams)) {
+                    node.stateParams = queryParams;
+                }
+                return node;
+            };
+
+            var createEdge = function (fromStateObj, toStateObj) {
+                var toArray = [];
+                if (toStateObj) {
+                    toArray.push(toStateObj);
+                }
                 return {
-                    to: to(node)
+                    from: fromStateObj,
+                    to: toArray,
+                    new: true
+                }
+            };
+
+            var createStateObj = function (state, stateParams) {
+                var stateObj = state;
+                if (typeof state === 'string') {
+                    stateObj = createNode(state, stateParams);
+                }
+                return stateObj;
+            };
+
+            /**
+             * Iterates all Edge objects in 'routes' and compares their
+             * 'from' value with the given 'fromNode' argument.
+             * @param fromNode The value to compare the routes with
+             * @returns An createEdge object with a 'from' property value
+             * matching 'fromNode'
+             */
+            var findRouteWithFrom = function (fromNode) {
+                for (var i = 0; i < routes.length; i++) {
+                    var edge = routes[i];
+                    if (angular.equals(edge.from, fromNode)) {
+                        return edge;
+                    }
+                }
+            };
+
+            var findObjectInArray = function (object, array) {
+                for (var i = 0; i < array.length; i++) {
+                    var aNode = array[i];
+                    if (angular.equals(aNode, object)) {
+                        return aNode;
+                    }
+                }
+            };
+
+            /**
+             *
+             * @param fromState Either object or string, whereas the object
+             * must have a property 'name' and an optional property 'stateParams'
+             * @param stateParams An object containing all query
+             * parameters to consider for the route
+             * @returns {{to}}
+             */
+            var from = function (fromState, stateParams) {
+                var fromStateObj = createStateObj(fromState, stateParams);
+                var edge = findRouteWithFrom(fromStateObj) || createEdge(fromStateObj);
+                return {
+                    to: to(edge)
                 };
             };
 
-            var to = function (node) {
+            var to = function (edge) {
                 return function (toState, stateParams) {
-                    var toStateObj = toState;
-                    if (typeof toState === 'string') {
-                        toStateObj = {name: toState};
-                        if (stateParams) {
-                            toStateObj.stateParams = stateParams;
-                        }
+                    var toStateObj = createStateObj(toState, stateParams);
+                    if (!findObjectInArray(toStateObj, edge.to)) {
+                        edge.to.push(toStateObj);
                     }
-                    node.to.push(toStateObj);
-                    if (!routeMap[node.from]) {
-                        routeMap[node.from] = node;
+                    //var fromStateKey = createStateObjKey(edge.from.name, edge.from.stateParams);
+                    if (edge.new) {
+                        delete edge.new;
+                        routes.push(edge);
                     }
                     return {
-                        to: to(node),
+                        to: to(edge),
                         from: from
                     };
                 };
             };
+
 
             this.$get = ['$rootScope', '$state', '$stateParams', '$templateCache', '$http', '$log',
                 function ($rootScope, $state, $stateParams, $templateCache, $http, $log) {
 
                     $log.debug('TemplatePrefetch: Instantiated');
 
-                    var prefetch = function (toState) {
+                    var prefetch = function (fromState, fromParams) {
 
-                        $log.debug('TemplatePrefetch: called with toState: ' + toState);
+                        $log.debug('TemplatePrefetch: called with fromState: ' + fromState + ', fromParams: ' + JSON.stringify(fromParams));
 
-                        var node = routeMap[toState];
-                        if (!node) {
+                        var edge = findRouteWithFrom(createNode(fromState, fromParams));
+                        if (!edge) {
+                            $log.debug('No edge found for fromState ' + fromState);
                             return;
                         }
 
-                        for (var i = 0; i < node.to.length; i++) {
+                        for (var i = 0; i < edge.to.length; i++) {
 
-                            var toStateNode = node.to[i];
+                            var toStateNode = edge.to[i];
                             var toStateName = toStateNode.name;
                             var toStateObj = $state.get(toStateName);
                             var url;
@@ -69,13 +126,13 @@
                                 for (var viewName in toStateObj.views) {
                                     var view = toStateObj.views[viewName];
                                     if (view.templateUrl) {
-                                        url = getTemplateUrl(view, toStateNode.stateParams);
+                                        url = getTemplateUrl(view, fromParams, toStateNode.stateParams);
                                         $log.debug('TemplatePrefetch: Fetching view template ' + url);
                                         $http.get(url).success(handleResponse(url));
                                     }
                                 }
                             } else {
-                                url = getTemplateUrl(toStateObj, toStateNode.stateParams);
+                                url = getTemplateUrl(toStateObj, fromParams, toStateNode.stateParams);
                                 $log.debug('TemplatePrefetch: Fetching template ' + url);
                                 $http.get(url).success(handleResponse(url));
                             }
@@ -99,38 +156,55 @@
                         };
                     };
 
-                    var getTemplateUrl = function (stateOrView, stateParams) {
+                    /**
+                     *
+                     * @param stateOrView The state or view whose template should be loaded
+                     * @param currentParams The stateParams of the currently active state
+                     * @param stateParams The stateParams configured with this state in case
+                     *          templateUrl function is used.
+                     * @returns {*}
+                     */
+                    var getTemplateUrl = function (stateOrView, currentParams, stateParams) {
                         var templateUrl = stateOrView.templateUrl;
                         if (typeof templateUrl === 'function') {
-                            var copiedStateParams = angular.copy($stateParams);
+                            //var copiedStateParams = angular.copy(currentParams);
 
                             /* If the toState comes with stateParams we copy them over to
                              * the injected stateParams, so the templateUrl function gets
-                             * the predefined and current stateParams. */
-                            if (stateParams) {
+                             * the predefined plus the current stateParams. */
+/*                            if (stateParams) {
                                 for (var param in stateParams) {
-                                    copiedStateParams[param] = stateParams[param];
+                                    if (stateParams.hasOwnProperty(param)) {
+                                        copiedStateParams[param] = stateParams[param];
+                                    }
                                 }
-                            }
-                            return templateUrl(copiedStateParams);
+                            }*/
+                            return templateUrl(stateParams || {});
                         }
                         return templateUrl;
                     };
 
-                    prefetch($state.current.name);
+                    prefetch($state.current.name, $stateParams);
 
-                    $rootScope.$on('$stateChangeSuccess', function (event, toState) {
-                        prefetch(toState.name);
+                    $rootScope.$on('$stateChangeSuccess', function (event, toState, toParams) {
+                        prefetch(toState.name, toParams);
                     });
 
                     // Sorry no API :)
                     return {};
                 }];
 
+            // Provider API
+
             this.from = from;
 
-            this.getRoutesFor = function (fromState) {
-                return routeMap[fromState].to;
+            this.getRoutesFor = function (fromState, stateParams) {
+                var fromStateObj = createStateObj(fromState, stateParams);
+                var edge = findRouteWithFrom(fromStateObj);
+                return edge ? edge.to : [];
             };
-        }]);
+        }])
+        .run(function (TemplatePrefetch) {
+            // Just trigger instantiation of TemplatePrefetch
+        });
 }(angular));

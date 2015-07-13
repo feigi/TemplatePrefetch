@@ -44,7 +44,7 @@ describe('Template Prefetch Module', function () {
             expect(testee.from().to().to).toBeDefined();
         });
 
-        it('to function returns object with to function thus enabling chaining', function () {
+        it('object returned by from function does not contain from function', function () {
             expect(testee.from().from).toBeUndefined();
         });
 
@@ -68,6 +68,22 @@ describe('Template Prefetch Module', function () {
             expect(testee.getRoutesFor('from2')).toEqual([{name: 'to3'}, {name: 'to4'}]);
         });
 
+        it('from function should accept object with name and stateParams property', function () {
+            testee.from('from', {i: 1}).to('to1');
+            testee.from('from', {i: 2}).to('to2');
+
+            expect(testee.getRoutesFor('from', {i: 1})).toEqual([{name: 'to1'}]);
+            expect(testee.getRoutesFor('from', {i: 2})).toEqual([{name: 'to2'}]);
+        });
+
+        it('from function should accept two parameters, the state name and stateParams object', function () {
+            testee.from({name: 'from', stateParams: {i: 1}}).to('to1');
+            testee.from({name: 'from', stateParams: {i: 2}}).to('to2');
+
+            expect(testee.getRoutesFor('from', {i: 1})).toEqual([{name: 'to1'}]);
+            expect(testee.getRoutesFor('from', {i: 2})).toEqual([{name: 'to2'}]);
+        });
+
         it('to function should accept object with name and stateParams property', function () {
             testee.from('from')
                 .to({name: 'to1', stateParams: {i: 0}})
@@ -89,6 +105,16 @@ describe('Template Prefetch Module', function () {
                 {name: 'to2'}
             ]);
         });
+
+        it('registering the same to state twice should not be possible', function () {
+            testee.from('from')
+                .to('to1', {i: 0})
+                .to('to1', {i: 0});
+
+            expect(testee.getRoutesFor('from')).toEqual([
+                {name: 'to1', stateParams: {i: 0}}
+            ]);
+        });
     });
 
     describe('Template Prefetching', function () {
@@ -100,7 +126,7 @@ describe('Template Prefetch Module', function () {
             'ng-include="\'test-include2.html\'"></div></div></div></div>';
         var MOCK_HTML = 'MOCK_HTML';
 
-        var rootScopeMock, stateMock, stateParamsMock, templateCacheMock, httpMock, TemplatePrefetchProvider;
+        var rootScopeMock, stateMock, stateParamsMock, templateCacheMock, httpMock;
 
         var onStateChangeSuccessCallback = null;
 
@@ -145,14 +171,6 @@ describe('Template Prefetch Module', function () {
 
         beforeEach(function () {
 
-            // Initialize the service provider
-            // by injecting it to a fake module's config block
-            angular.module('test-template-prefetch', [])
-                .config(function (_TemplatePrefetchProvider_) {
-                    TemplatePrefetchProvider = _TemplatePrefetchProvider_;
-                }
-            );
-
             // Initialize test-template-prefetch injector
             module('template-prefetch', 'test-template-prefetch');
 
@@ -167,15 +185,23 @@ describe('Template Prefetch Module', function () {
                 $provide.value("$rootScope", rootScopeMock);
             });
 
-            inject();
+            //inject();
         });
+
+        var initTestModule = function (initFunc) {
+            angular.module('test-template-prefetch', [])
+                .config(function (TemplatePrefetchProvider) {
+                    initFunc(TemplatePrefetchProvider);
+                }
+            );
+            inject();
+        };
 
         it('test setup', function () {
             expect(rootScopeMock).toBeDefined();
             expect(stateMock).toBeDefined();
             expect(templateCacheMock).toBeDefined();
             expect(httpMock).toBeDefined();
-            expect(TemplatePrefetchProvider).toBeDefined();
         });
 
         // Injecting the service calls its $get method, thus initializes it
@@ -185,10 +211,11 @@ describe('Template Prefetch Module', function () {
 
         it('On Initialize: Service runs a prefetch for the current state.', function () {
             statesMap['state2'] = {templateUrl: 'test-template.html'};
-            TemplatePrefetchProvider.from('state1').to('state2');
             currentStateMock.name = "state1";
-            // Trigger init of TemplatePrefetch
-            inject(function (TemplatePrefetch) {
+
+            // Init and config the test module
+            initTestModule(function (TemplatePrefetchProvider) {
+                TemplatePrefetchProvider.from('state1').to('state2');
             });
 
             expect(httpMock.get).toHaveBeenCalledWith('test-template.html');
@@ -200,9 +227,10 @@ describe('Template Prefetch Module', function () {
             currentStateMock.name = "state1";
             statesMap['state2'] = {templateUrl: 'test-template.html'};
             statesMap['state3'] = {templateUrl: 'test-template2.html'};
-            TemplatePrefetchProvider.from('state1').to('state2').to('state3');
-            // Trigger init of TemplatePrefetch
-            inject(function (TemplatePrefetch) {
+
+            // Init and config the test module
+            initTestModule(function (TemplatePrefetchProvider) {
+                TemplatePrefetchProvider.from('state1').to('state2').to('state3');
             });
 
             onStateChangeSuccessCallback(MOCK_EVENT, {name: 'state2'});
@@ -219,9 +247,10 @@ describe('Template Prefetch Module', function () {
                     'view2': {templateUrl: 'test-template2.html'}
                 }
             };
-            TemplatePrefetchProvider.from('state1').to('state2');
-            // Trigger init of TemplatePrefetch
-            inject(function (TemplatePrefetch) {
+
+            // Init and config the test module
+            initTestModule(function (TemplatePrefetchProvider) {
+                TemplatePrefetchProvider.from('state1').to('state2');
             });
 
             expect(httpMock.get).toHaveBeenCalledWith('test-template1.html');
@@ -233,9 +262,10 @@ describe('Template Prefetch Module', function () {
         it('Service should load templates from ng-includes', function () {
             currentStateMock.name = "state1";
             statesMap['state2'] = {templateUrl: 'test-includes.html'};
-            TemplatePrefetchProvider.from('state1').to('state2');
-            // Trigger init of TemplatePrefetch
-            inject(function (TemplatePrefetch) {
+
+            // Init and config the test module
+            initTestModule(function (TemplatePrefetchProvider) {
+                TemplatePrefetchProvider.from('state1').to('state2');
             });
 
             expect(httpMock.get).toHaveBeenCalledWith('test-includes.html');
@@ -251,9 +281,10 @@ describe('Template Prefetch Module', function () {
             statesMap['state2'] = {templateUrl: function () {
                 return 'test-template.html'
             }};
-            TemplatePrefetchProvider.from('state1').to('state2');
-            // Trigger init of TemplatePrefetch
-            inject(function (TemplatePrefetch) {
+
+            // Init and config the test module
+            initTestModule(function (TemplatePrefetchProvider) {
+                TemplatePrefetchProvider.from('state1').to('state2');
             });
 
             expect(httpMock.get).toHaveBeenCalledWith('test-template.html');
@@ -265,9 +296,10 @@ describe('Template Prefetch Module', function () {
             statesMap['state2'] = {templateUrl: function () {
                 return 'test-template.html'
             }};
-            TemplatePrefetchProvider.from('state1').to('state2');
-            // Trigger init of TemplatePrefetch
-            inject(function (TemplatePrefetch) {
+
+            // Init and config the test module
+            initTestModule(function (TemplatePrefetchProvider) {
+                TemplatePrefetchProvider.from('state1').to('state2');
             });
 
             expect(httpMock.get).toHaveBeenCalledWith('test-template.html');
@@ -279,9 +311,10 @@ describe('Template Prefetch Module', function () {
             statesMap['state2'] = {templateUrl: function ($stateParams) {
                 expect($stateParams).toBeDefined();
             }};
-            TemplatePrefetchProvider.from('state1').to('state2');
-            // Trigger init of TemplatePrefetch
-            inject(function (TemplatePrefetch) {
+
+            // Init and config the test module
+            initTestModule(function (TemplatePrefetchProvider) {
+                TemplatePrefetchProvider.from('state1').to('state2');
             });
         });
 
@@ -299,10 +332,27 @@ describe('Template Prefetch Module', function () {
             statesMap['state2'] = {templateUrl: function ($stateParams) {
                 expect($stateParams).toEqual(EXPECTED_STATE_PARAMS);
             }};
-            TemplatePrefetchProvider.from('state1').to('state2', {i: 2});
-            // Trigger init of TemplatePrefetch
-            inject(function (TemplatePrefetch) {
+
+            // Init and config the test module
+            initTestModule(function (TemplatePrefetchProvider) {
+                TemplatePrefetchProvider.from('state1').to('state2', {i: 2});
             });
+        });
+
+        it('from state should honor stateParams as well and choose the appropriate node', function () {
+            currentStateMock.name = "state1";
+            stateParamsMock.i = '1';
+            statesMap['state2'] = {templateUrl: 'test-template1.html'};
+            statesMap['state3'] = {templateUrl: 'test-template2.html'};
+
+            // Init and config the test module
+            initTestModule(function (TemplatePrefetchProvider) {
+                TemplatePrefetchProvider.from('state1').to('state2');
+                TemplatePrefetchProvider.from('state1', {i: '1'}).to('state3');
+            });
+
+            expect(httpMock.get).toHaveBeenCalledWith('test-template2.html');
+            expect(templateCacheMock.put).toHaveBeenCalledWith('test-template2.html', MOCK_HTML);
         });
     });
 });
