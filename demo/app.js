@@ -35,11 +35,25 @@
                     parent: 'abstractList',
                     url: '/list',
                     views: {
-                        list: {
+                        "list": {
                             templateUrl: 'views/list.html'
                         },
-                        details: {
-                            templateUrl: 'views/details.html'
+                        "details": {}
+                    }
+                })
+                .state('list.detailsA', {
+                    url: '/details/a',
+                    views: {
+                        "details@abstractList": {
+                            templateUrl: 'views/details-a.html'
+                        }
+                    }
+                })
+                .state('list.detailsB', {
+                    url: '/details/b',
+                    views: {
+                        "details@abstractList": {
+                            templateUrl: 'views/details-b.html'
                         }
                     }
                 });
@@ -49,5 +63,8 @@
             TemplatePrefetchProvider.from('flow', {i: '1'}).to('flow', {i: '2'});
             TemplatePrefetchProvider.from('flow', {i: '2'}).to('flow', {i: '3'});
             TemplatePrefetchProvider.from('flow', {i: '3'}).to('main');
+            TemplatePrefetchProvider.from('list').to('list.detailsA').to('list.detailsB');
+            TemplatePrefetchProvider.from('list.detailsA').to('list.detailsB');
+            TemplatePrefetchProvider.from('list.detailsB').to('list.detailsA');
         })
 })(angular);
