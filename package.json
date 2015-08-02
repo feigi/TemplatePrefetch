@@ -1,6 +1,6 @@
 {
   "author": "Christian Ziegler <npm@public.core-concepts.de>",
-  "name": "template-prefetch",
+  "name": "ui-router-template-prefetch",
   "description": "A provider based on ui.router which prefetches all templates required by potentially following states.",
   "keywords": [
     "template",

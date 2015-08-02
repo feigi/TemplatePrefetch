@@ -28,6 +28,11 @@ Using UI-Router you are encouraged to divide your application markup in small ju
 ```shell
 bower install --save ui-router-template-prefetch
 ```
+### or
+
+```shell
+npm install --save ui-router-template-prefetch
+```
 
 ## Documentation
 
