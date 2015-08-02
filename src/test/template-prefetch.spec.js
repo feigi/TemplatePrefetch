@@ -124,9 +124,11 @@ describe('Template Prefetch Module', function () {
 
         var INCLUDE_HTML = '<div ng-include="\'test-include1.html\'"></div><div><div><div><div ' +
             'ng-include="\'test-include2.html\'"></div></div></div></div>';
+        var INCLUDE2_HTML = '<div ng-include="\'test-include3.html\'"></div>';
+        var INCLUDE3_HTML = '<div ng-include="\'test-include4.html\'"></div>';
         var MOCK_HTML = 'MOCK_HTML';
 
-        var rootScopeMock, stateMock, stateParamsMock, templateCacheMock, httpMock;
+        var rootScopeMock, stateMock, stateParamsMock, templateCacheMock, templateCacheMockMap, httpMock;
 
         var onStateChangeSuccessCallback = null;
 
@@ -149,20 +151,32 @@ describe('Template Prefetch Module', function () {
 
             stateParamsMock = {};
 
+            var templateForUrl = function (url, resolveFunc) {
+                if (url === 'test-include.html') {
+                    resolveFunc(INCLUDE_HTML);
+                } else if (url === 'test-include2.html') {
+                    resolveFunc(INCLUDE2_HTML);
+                } else if (url === 'test-include3.html') {
+                    resolveFunc(INCLUDE3_HTML);
+                } else {
+                    resolveFunc(MOCK_HTML);
+                }
+            };
+
+            templateCacheMockMap = {};
+
             templateCacheMock = {
-                put: jasmine.createSpy('templateCache.put')
+                put: jasmine.createSpy('templateCache.put'),
+                get: jasmine.createSpy('templateCache.get').and.callFake(function (url) {
+                    return templateCacheMockMap[url];
+                })
             };
 
             httpMock = {
                 get: jasmine.createSpy('http.get').and.callFake(function (url) {
                     return {
                         success: function (resolveFunc) {
-                            // Immediately resolve promise
-                            if (url === 'test-includes.html') {
-                                resolveFunc(INCLUDE_HTML);
-                            } else {
-                                resolveFunc(MOCK_HTML);
-                            }
+                            templateForUrl(url, resolveFunc);
                         }
                     }
                 })
@@ -259,28 +273,34 @@ describe('Template Prefetch Module', function () {
             expect(templateCacheMock.put).toHaveBeenCalledWith('test-template2.html', MOCK_HTML);
         });
 
-        it('Service should load templates from ng-includes', function () {
+        it('Service should load templates from ng-includes (recursively)', function () {
             currentStateMock.name = "state1";
-            statesMap['state2'] = {templateUrl: 'test-includes.html'};
+            statesMap['state2'] = {templateUrl: 'test-include.html'};
 
             // Init and config the test module
             initTestModule(function (TemplatePrefetchProvider) {
                 TemplatePrefetchProvider.from('state1').to('state2');
             });
 
-            expect(httpMock.get).toHaveBeenCalledWith('test-includes.html');
+            expect(httpMock.get).toHaveBeenCalledWith('test-include.html');
             expect(httpMock.get).toHaveBeenCalledWith('test-include1.html');
             expect(httpMock.get).toHaveBeenCalledWith('test-include2.html');
-            expect(templateCacheMock.put).toHaveBeenCalledWith('test-includes.html', INCLUDE_HTML);
+            expect(httpMock.get).toHaveBeenCalledWith('test-include3.html');
+            expect(httpMock.get).toHaveBeenCalledWith('test-include4.html');
+            expect(templateCacheMock.put).toHaveBeenCalledWith('test-include.html', INCLUDE_HTML);
             expect(templateCacheMock.put).toHaveBeenCalledWith('test-include1.html', MOCK_HTML);
-            expect(templateCacheMock.put).toHaveBeenCalledWith('test-include2.html', MOCK_HTML);
+            expect(templateCacheMock.put).toHaveBeenCalledWith('test-include2.html', INCLUDE2_HTML);
+            expect(templateCacheMock.put).toHaveBeenCalledWith('test-include3.html', INCLUDE3_HTML);
+            expect(templateCacheMock.put).toHaveBeenCalledWith('test-include4.html', MOCK_HTML);
         });
 
         it('Service should resolve templateUrl functions', function () {
             currentStateMock.name = "state1";
-            statesMap['state2'] = {templateUrl: function () {
-                return 'test-template.html'
-            }};
+            statesMap['state2'] = {
+                templateUrl: function () {
+                    return 'test-template.html'
+                }
+            };
 
             // Init and config the test module
             initTestModule(function (TemplatePrefetchProvider) {
@@ -293,9 +313,11 @@ describe('Template Prefetch Module', function () {
 
         it('Service should resolve templateUrl functions', function () {
             currentStateMock.name = "state1";
-            statesMap['state2'] = {templateUrl: function () {
-                return 'test-template.html'
-            }};
+            statesMap['state2'] = {
+                templateUrl: function () {
+                    return 'test-template.html'
+                }
+            };
 
             // Init and config the test module
             initTestModule(function (TemplatePrefetchProvider) {
@@ -308,9 +330,11 @@ describe('Template Prefetch Module', function () {
 
         it('templateUrl functions should get stateParams as argument', function () {
             currentStateMock.name = "state1";
-            statesMap['state2'] = {templateUrl: function ($stateParams) {
-                expect($stateParams).toBeDefined();
-            }};
+            statesMap['state2'] = {
+                templateUrl: function ($stateParams) {
+                    expect($stateParams).toBeDefined();
+                }
+            };
 
             // Init and config the test module
             initTestModule(function (TemplatePrefetchProvider) {
@@ -329,9 +353,11 @@ describe('Template Prefetch Module', function () {
                 i: 2
             };
             currentStateMock.name = "state1";
-            statesMap['state2'] = {templateUrl: function ($stateParams) {
-                expect($stateParams).toEqual(EXPECTED_STATE_PARAMS);
-            }};
+            statesMap['state2'] = {
+                templateUrl: function ($stateParams) {
+                    expect($stateParams).toEqual(EXPECTED_STATE_PARAMS);
+                }
+            };
 
             // Init and config the test module
             initTestModule(function (TemplatePrefetchProvider) {
@@ -354,5 +380,20 @@ describe('Template Prefetch Module', function () {
             expect(httpMock.get).toHaveBeenCalledWith('test-template2.html');
             expect(templateCacheMock.put).toHaveBeenCalledWith('test-template2.html', MOCK_HTML);
         });
+
+        it('no http.get should be done if the templateCache already contains the template', function () {
+            statesMap['state2'] = {templateUrl: 'test-template.html'};
+            currentStateMock.name = "state1";
+            templateCacheMockMap["test-template.html"] = MOCK_HTML;
+
+            // Init and config the test module
+            initTestModule(function (TemplatePrefetchProvider) {
+                TemplatePrefetchProvider.from('state1').to('state2');
+            });
+
+            expect(templateCacheMock.get).toHaveBeenCalledWith("test-template.html");
+            expect(httpMock.get).not.toHaveBeenCalled();
+            expect(templateCacheMock.put).not.toHaveBeenCalled();
+        })
     });
 });

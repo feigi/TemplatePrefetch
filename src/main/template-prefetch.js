@@ -106,7 +106,7 @@
 
                     var prefetch = function (fromState, fromParams) {
 
-                        $log.debug('TemplatePrefetch: called with fromState: ' + fromState + ', fromParams: ' + JSON.stringify(fromParams));
+                        $log.debug('TemplatePrefetch: Called with fromState ' + fromState + ', fromParams ' + JSON.stringify(fromParams));
 
                         var edge = findRouteWithFrom(createNode(fromState, fromParams));
                         if (!edge) {
@@ -121,20 +121,21 @@
                             var toStateObj = $state.get(toStateName);
                             var url;
 
+                            $log.debug('TemplatePrefetch: Determining templates for toState ' + toStateName + ', toParams: '
+                                + JSON.stringify(toStateNode.stateParams));
+
                             if (!toStateObj.templateUrl && toStateObj.views) {
-                                $log.debug('TemplatePrefetch: No templateUrl for ' + toStateName + ', checking views...');
+                                $log.debug('TemplatePrefetch: No templateUrl for state ' + toStateName + ', checking views...');
                                 for (var viewName in toStateObj.views) {
                                     var view = toStateObj.views[viewName];
                                     if (view.templateUrl) {
                                         url = getTemplateUrl(view, fromParams, toStateNode.stateParams);
-                                        $log.debug('TemplatePrefetch: Fetching view template ' + url);
-                                        $http.get(url).success(handleResponse(url));
+                                        fetchTemplate(url);
                                     }
                                 }
                             } else {
                                 url = getTemplateUrl(toStateObj, fromParams, toStateNode.stateParams);
-                                $log.debug('TemplatePrefetch: Fetching template ' + url);
-                                $http.get(url).success(handleResponse(url));
+                                fetchTemplate(url);
                             }
                         }
                     };
@@ -145,9 +146,18 @@
                         while (match = pattern.exec(data)) {
                             // Second capture group of regex;
                             var url = match[2];
-                            $http.get(url).success(handleResponse(url));
+                            fetchTemplate(url);
                         }
                     }
+
+                    var fetchTemplate = function (url) {
+                        if (!$templateCache.get(url)) {
+                            $log.debug('TemplatePrefetch: Fetching template - ' + url);
+                            $http.get(url).success(handleResponse(url));
+                        } else {
+                            $log.debug('TemplatePrefetch: Template already cached - ' + url);
+                        }
+                    };
 
                     var handleResponse = function (url) {
                         return function (data) {
@@ -172,19 +182,22 @@
                             /* If the toState comes with stateParams we copy them over to
                              * the injected stateParams, so the templateUrl function gets
                              * the predefined plus the current stateParams. */
-/*                            if (stateParams) {
-                                for (var param in stateParams) {
-                                    if (stateParams.hasOwnProperty(param)) {
-                                        copiedStateParams[param] = stateParams[param];
-                                    }
-                                }
-                            }*/
+                            /*                            if (stateParams) {
+                             for (var param in stateParams) {
+                             if (stateParams.hasOwnProperty(param)) {
+                             copiedStateParams[param] = stateParams[param];
+                             }
+                             }
+                             }*/
                             return templateUrl(stateParams || {});
                         }
                         return templateUrl;
                     };
 
-                    prefetch($state.current.name, $stateParams);
+                    if ($state.current.name !== '') {
+                        prefetch($state.current.name, $stateParams);
+
+                    }
 
                     $rootScope.$on('$stateChangeSuccess', function (event, toState, toParams) {
                         prefetch(toState.name, toParams);
