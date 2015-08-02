@@ -1,8 +1,23 @@
 {
-  "version": "0.0.1",
+  "author": "Christian Ziegler <npm@public.core-concepts.de>",
+  "name": "template-prefetch",
+  "description": "A provider based on ui.router which prefetches all templates required by potentially following states.",
+  "keywords": [
+    "template",
+    "prefetch",
+    "TemplatePrefetch",
+    "ui-router",
+    "ui.router",
+    "angular",
+    "AngularJS",
+    "templateCache"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/feigi/TemplatePrefetch.git"
+  },
+  "version": "0.2.0",
   "dependencies": {},
-  "repository": "https://github.com/yuvalsaraf/generator-bower-package.git",
-  "description": "A project for building your own bower component and share it later",
   "scripts": {
     "test": "grunt karma:continuous"
   },
@@ -23,5 +38,10 @@
     "karma-jasmine": "^0.3.5",
     "karma-phantomjs-launcher": "^0.2.0",
     "phantomjs": "^1.9.17"
-  }
+  },
+  "bugs": {
+    "url": "https://github.com/feigi/TemplatePrefetch/issues"
+  },
+  "homepage": "https://github.com/feigi/TemplatePrefetch#readme",
+  "license": "MIT"
 }
