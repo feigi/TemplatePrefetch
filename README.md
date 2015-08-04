@@ -9,7 +9,7 @@ A provider based on ui.router which prefetches all templates required by potenti
 
 ## Motivation
 
-Using UI-Router you are encouraged to divide your application markup in small junks. This can result in quite a view 
+Using UI-Router you are encouraged to divide your application markup in small chunks. This can result in quite a few 
  files making up a single page. Those files obviously have to be fetched from the server which can lead to flickering
  during the rendering process. Of course you can help yourself by prefilling the template cache, but this usually means
  loading a single javascript file containing the markup for your whole application. In other words you have to load markup
