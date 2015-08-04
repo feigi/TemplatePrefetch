@@ -12,7 +12,7 @@ A provider based on ui.router which prefetches all templates required by potenti
 Using UI-Router you are encouraged to divide your application markup in small junks. This can result in quite a view 
  files making up a single page. Those files obviously have to be fetched from the server which can lead to flickering
  during the rendering process. Of course you can help yourself by prefilling the template cache, but this usually means
- loading a single javascript file containing the markup for your whole application. In other words have to load markup
+ loading a single javascript file containing the markup for your whole application. In other words you have to load markup
  you may not even need. This can cause rather long loading times which is definitely not what you want, especially on 
  mobile devices.
  
@@ -66,15 +66,15 @@ In order to prefetch such templates you have to configure your from/to states wi
 angular('myApp', ['template-prefetch'])
     .config(function (TemplatePrefetchProvider) {
         // First syntax
-        TemplatePrefetchProvider.from({name='start', stateParams={p: 1})
-            .to({name='start', stateParams={p: 2});
+        TemplatePrefetchProvider.from({name='start', stateParams={p: 1}})
+            .to({name='start', stateParams={p: 2}});
         // Second syntax
         TemplatePrefetchProvider.from('start', {p: 1}).to('start', {p: 2});
 });
 ```
 TemplatePrefetch will call your templateUrl function and pass in the stateParams you configured in your routes. It will not pass in any other stateParams because it can not predict the future :).
 
-It is important not note that stateParams are __only__ necessary if they determine the actual template. Leave them out if stateParams are only used in your controllers as otherwise the prefetching will not work properly.
+It is important to note that stateParams are __only__ necessary if they determine the actual template. Leave them out if stateParams are only used in your controllers as otherwise the prefetching will not work properly.
 
 This is all you have to do. From now on ui-router-template-prefetch will fetch all templates and ng-includes for
  all to-states of a given from-state.
